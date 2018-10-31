@@ -134,7 +134,22 @@ int main(int argc, char **argv) {
 			printf("Value at offset 0x%X (%p): 0x%0*lX\n", (int) target + i*type_width, virt_addr, type_width*2, read_result);
 		else {
 			if (read_result != prev_read_result || i == 0) {
-				printf("0x%04X: 0x%0*lX\n", (int)(target + i*type_width), type_width*2, read_result);
+				printf("0x%04X: 0x%0*lX", (int)(target + i*type_width), type_width*2, read_result);
+				switch(access_type) {
+					case 'b':
+						printf(" %1s", (char*)(&read_result));
+						break;
+					case 'h':
+						printf(" %2s", (char*)(&read_result));
+						break;
+					case 'w':
+						printf(" %.4s", (char*)(&read_result));
+						break;
+					case 'd':
+						printf(" %.8s", (char*)(&read_result));
+						break;
+				}
+				printf("\n");
 				read_result_dupped = 0;
 			} else {
 				if (!read_result_dupped)
