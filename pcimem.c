@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
 	int type_width;
 	int i;
 	int map_size = 4096UL;
+	int write_op = 0;
 
 	if(argc < 3) {
 		// pcimem /sys/bus/pci/devices/0001\:00\:07.0/resource0 0x100 w 0x00
@@ -76,6 +77,9 @@ int main(int argc, char **argv) {
 		if (argv[3][1] == '*')
 			items_count = strtoul(argv[3]+2, 0, 0);
 	}
+
+	if(argc > 4)
+		write_op = 1;
 
 	switch(access_type) {
 		case 'b':
@@ -112,6 +116,7 @@ int main(int argc, char **argv) {
 	printf("PCI Memory mapped to address 0x%08lx.\n", (unsigned long) map_base);
 	fflush(stdout);
 
+	if(!write_op) {
 	for (i = 0; i < items_count; i++) {
 
 		virt_addr = map_base + target + i*type_width - target_base;
@@ -160,10 +165,10 @@ int main(int argc, char **argv) {
 
 		prev_read_result = read_result;
 	}
-
 	fflush(stdout);
+	}
 
-	if(argc > 4) {
+	if(write_op) {
 		writeval = strtoull(argv[4], NULL, 0);
 		switch(access_type) {
 			case 'b':
