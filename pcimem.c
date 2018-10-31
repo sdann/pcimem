@@ -15,7 +15,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 			items_count = strtoul(argv[3]+2, 0, 0);
 	}
 
-        switch(access_type) {
+	switch(access_type) {
 		case 'b':
 			type_width = 1;
 			break;
@@ -95,59 +95,58 @@ int main(int argc, char **argv) {
 			exit(2);
 	}
 
-    if((fd = open(filename, O_RDWR | O_SYNC)) == -1) PRINT_ERROR;
-    printf("%s opened.\n", filename);
-    printf("Target offset is 0x%x, page size is %ld\n", (int) target, sysconf(_SC_PAGE_SIZE));
-    fflush(stdout);
+	if((fd = open(filename, O_RDWR | O_SYNC)) == -1) PRINT_ERROR;
+	printf("%s opened.\n", filename);
+	printf("Target offset is 0x%x, page size is %ld\n", (int) target, sysconf(_SC_PAGE_SIZE));
+	fflush(stdout);
 
-    target_base = target & ~(sysconf(_SC_PAGE_SIZE)-1);
-    if (target + items_count*type_width - target_base > map_size)
-	map_size = target + items_count*type_width - target_base;
+	target_base = target & ~(sysconf(_SC_PAGE_SIZE)-1);
+	if (target + items_count*type_width - target_base > map_size)
+		map_size = target + items_count*type_width - target_base;
 
-    /* Map one page */
-    printf("mmap(%d, %d, 0x%x, 0x%x, %d, 0x%x)\n", 0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, (int) target);
+	/* Map one page */
+	printf("mmap(%d, %d, 0x%x, 0x%x, %d, 0x%x)\n", 0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, (int) target);
 
-    map_base = mmap(0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target_base);
-    if(map_base == (void *) -1) PRINT_ERROR;
-    printf("PCI Memory mapped to address 0x%08lx.\n", (unsigned long) map_base);
-    fflush(stdout);
+	map_base = mmap(0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target_base);
+	if(map_base == (void *) -1) PRINT_ERROR;
+	printf("PCI Memory mapped to address 0x%08lx.\n", (unsigned long) map_base);
+	fflush(stdout);
 
-    for (i = 0; i < items_count; i++) {
+	for (i = 0; i < items_count; i++) {
 
-        virt_addr = map_base + target + i*type_width - target_base;
-        switch(access_type) {
-		case 'b':
-			read_result = *((uint8_t *) virt_addr);
-			break;
-		case 'h':
-			read_result = *((uint16_t *) virt_addr);
-			break;
-		case 'w':
-			read_result = *((uint32_t *) virt_addr);
-			break;
-                case 'd':
-			read_result = *((uint64_t *) virt_addr);
-			break;
+		virt_addr = map_base + target + i*type_width - target_base;
+		switch(access_type) {
+			case 'b':
+				read_result = *((uint8_t *) virt_addr);
+				break;
+			case 'h':
+				read_result = *((uint16_t *) virt_addr);
+				break;
+			case 'w':
+				read_result = *((uint32_t *) virt_addr);
+				break;
+			case 'd':
+				read_result = *((uint64_t *) virt_addr);
+				break;
+		}
+
+		if (verbose)
+			printf("Value at offset 0x%X (%p): 0x%0*lX\n", (int) target + i*type_width, virt_addr, type_width*2, read_result);
+		else {
+			if (read_result != prev_read_result || i == 0) {
+				printf("0x%04X: 0x%0*lX\n", (int)(target + i*type_width), type_width*2, read_result);
+				read_result_dupped = 0;
+			} else {
+				if (!read_result_dupped)
+					printf("...\n");
+				read_result_dupped = 1;
+			}
+		}
+
+		prev_read_result = read_result;
 	}
 
-    	if (verbose)
-            printf("Value at offset 0x%X (%p): 0x%0*lX\n", (int) target + i*type_width, virt_addr, type_width*2, read_result);
-        else {
-	    if (read_result != prev_read_result || i == 0) {
-                printf("0x%04X: 0x%0*lX\n", (int)(target + i*type_width), type_width*2, read_result);
-                read_result_dupped = 0;
-            } else {
-                if (!read_result_dupped)
-                    printf("...\n");
-                read_result_dupped = 1;
-            }
-        }
-	
-	prev_read_result = read_result;
-
-    }
-
-    fflush(stdout);
+	fflush(stdout);
 
 	if(argc > 4) {
 		writeval = strtoull(argv[4], NULL, 0);
@@ -170,11 +169,11 @@ int main(int argc, char **argv) {
 				break;
 		}
 		printf("Written 0x%0*lX; readback 0x%*lX\n", type_width,
-		       writeval, type_width, read_result);
+			writeval, type_width, read_result);
 		fflush(stdout);
 	}
 
 	if(munmap(map_base, map_size) == -1) PRINT_ERROR;
-    close(fd);
-    return 0;
+	close(fd);
+	return 0;
 }
