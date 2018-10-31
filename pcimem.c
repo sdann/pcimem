@@ -170,26 +170,36 @@ int main(int argc, char **argv) {
 
 	if(write_op) {
 		writeval = strtoull(argv[4], NULL, 0);
-		switch(access_type) {
-			case 'b':
-				*((uint8_t *) virt_addr) = writeval;
-				read_result = *((uint8_t *) virt_addr);
-				break;
-			case 'h':
-				*((uint16_t *) virt_addr) = writeval;
-				read_result = *((uint16_t *) virt_addr);
-				break;
-			case 'w':
-				*((uint32_t *) virt_addr) = writeval;
-				read_result = *((uint32_t *) virt_addr);
-				break;
-			case 'd':
-				*((uint64_t *) virt_addr) = writeval;
-				read_result = *((uint64_t *) virt_addr);
-				break;
+		printf("Writing 0x%0*lX to 0x%0*lX:0x%0*lX\n",
+			type_width*2, writeval,
+			type_width*2, target - target_base,
+			type_width*2, type_width*items_count - target_base);
+		for (i = 0; i < items_count; i++) {
+			virt_addr = map_base + target + i*type_width - target_base;
+			switch(access_type) {
+				case 'b':
+					*((uint8_t *) virt_addr) = writeval;
+					read_result = *((uint8_t *) virt_addr);
+					break;
+				case 'h':
+					*((uint16_t *) virt_addr) = writeval;
+					read_result = *((uint16_t *) virt_addr);
+					break;
+				case 'w':
+					*((uint32_t *) virt_addr) = writeval;
+					read_result = *((uint32_t *) virt_addr);
+					break;
+				case 'd':
+					*((uint64_t *) virt_addr) = writeval;
+					read_result = *((uint64_t *) virt_addr);
+					break;
+			}
+			if (verbose)
+				printf("0x%04X: write 0x%0*lX; read 0x%0*lX\n",
+					(int)(target + i*type_width),
+					type_width*2, writeval,
+					type_width*2, read_result);
 		}
-		printf("Written 0x%0*lX; readback 0x%*lX\n", type_width,
-			writeval, type_width, read_result);
 		fflush(stdout);
 	}
 
